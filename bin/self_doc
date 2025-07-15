@@ -71,7 +71,7 @@ if [[ -z "$CLI_BIN" || ! -f "$CLI_BIN" ]]; then
   exit 1
 fi
 
-VERSION=$(grep -E '^VERSION=' "$CLI_BIN" | cut -d '=' -f2 | tr -d '"\r\n' | xargs)
+# VERSION=$(grep -E '^VERSION=' "$CLI_BIN" | cut -d '=' -f2 | tr -d '"\r\n' | xargs)
 # VERSION=$(grep -E '^VERSION=' "$CLI_BIN" | cut -d '=' -f2 | tr -d '"\r\n')
 # VERSION=$(grep -E '^VERSION=' "$CLI_BIN" | cut -d '=' -f2 | tr -d '"')
 
