@@ -75,7 +75,7 @@ VERSION=$(grep -E '^VERSION=' "$CLI_BIN" | cut -d '=' -f2 | tr -d '"\r\n' | xarg
 # VERSION=$(grep -E '^VERSION=' "$CLI_BIN" | cut -d '=' -f2 | tr -d '"\r\n')
 # VERSION=$(grep -E '^VERSION=' "$CLI_BIN" | cut -d '=' -f2 | tr -d '"')
 
-[[ "$QUIET" == false ]] && echo "🧪 Version parsed: '$VERSION'"
+[[ "$QUIET" == false ]] && echo "🧪 VERSION='$VERSION'"
 
 # --- Fallbacks if not set in vars ---
 CLI_NAME="${CLI_NAME:-$(basename "$CLI_BIN")}"
