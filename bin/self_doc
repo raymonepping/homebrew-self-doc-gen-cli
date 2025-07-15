@@ -4,7 +4,7 @@ set -euo pipefail
 trap '[[ "$QUIET" == false ]] && echo "❌ Error occurred on line $LINENO"; exit 1' ERR
 
 # --- Default values ---
-VERSION="1.0.5"
+VERSION="1.0.0"
 
 # --- Homebrew / Dev / Local support ---
 if [[ -n "${SELF_DOC_HOME:-}" && -d "$SELF_DOC_HOME/lib" ]]; then
