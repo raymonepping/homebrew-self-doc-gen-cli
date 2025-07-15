@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-trap '[[ "$QUIET" == false ]] && echo "❌ Error occurred on line $LINENO"; exit 1' ERR
+trap '[[ "${QUIET:-false}" == false ]] && echo "❌ Error occurred on line $LINENO"; exit 1' ERR
 
 # --- Default values ---
 # shellcheck disable=SC2034
-VERSION="1.0.7"
+VERSION="1.0.8"
 
 # --- Homebrew / Dev / Local support ---
 if [[ -n "${SELF_DOC_HOME:-}" && -d "$SELF_DOC_HOME/lib" ]]; then
@@ -19,15 +19,13 @@ elif command -v brew &>/dev/null; then
   fi
 fi
 
-# --- Fallback to relative path if no brew env found ---
 if [[ -z "${BASE_DIR:-}" ]]; then
   BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-export LIB_DIR="$BASE_DIR/lib" # if used by sourced logic later
+export LIB_DIR="$BASE_DIR/lib"
 
-# Locate tpl folder just like lib
 possible_tpl_dirs=(
   "$BASE_DIR/tpl"
   "$SCRIPT_DIR/../tpl"
@@ -45,7 +43,6 @@ done
 
 IFS=$'\n\t'
 
-# --- Default values ---
 TEMPLATE_DIR="${TPL_DIR:-tpl}"
 OUT_FILE="README.md"
 DRY_RUN=false
@@ -56,7 +53,6 @@ EMOJI="${EMOJI:-🌳}"
 TAGLINE="${TAGLINE:-"CLI tool that visualizes and documents folder structures"}"
 QUOTE="${QUOTE:-"Structure isn't boring – it's your first line of clarity."}"
 QUOTE_AUTHOR="${QUOTE_AUTHOR:-"You (probably during a cleanup)"}"
-
 
 TREE_TMP=$(mktemp)
 
@@ -73,11 +69,12 @@ Options:
   -v          Print version and exit
   -h          Show help and exit
 
-Long flags supported as well: --tpl-dir, --outfile, --dry-run, --quiet, --version, --help
+Long flags supported as well: --tpl-dir, --outfile, --dry-run, --quiet, --version, --cli-bin, --help
 EOF
 }
 
-# --- Parse options ---
+# --- Parse options and allow CLI_BIN override ---
+CLI_BIN=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
   -t | --tpl-dir)
@@ -97,13 +94,14 @@ while [[ $# -gt 0 ]]; do
     shift
     ;;
   -v | --version)
-    print_version
-    exit 0
+    # Delay print_version until after CLI_NAME is set below
+    PRINT_VERSION_ONLY=true
+    shift
     ;;
   -f | --cli-bin)
     CLI_BIN="$2"
     shift 2
-    ;;    
+    ;;
   -h | --help)
     show_help
     exit 0
@@ -116,33 +114,42 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-# --- Dynamic discovery (unless overridden) ---
-if [[ -z "${CLI_BIN:-}" ]]; then
+# --- CLI binary resolution ---
+if [[ -n "$CLI_BIN" ]]; then
+  if [[ ! -f "$CLI_BIN" || ! -x "$CLI_BIN" ]]; then
+    echo "❌ Provided CLI binary (-f $CLI_BIN) is not found or not executable."
+    exit 1
+  fi
+else
+  # Try to auto-detect an executable in ./bin that isn't a .sh
   CLI_BIN=$(find ./bin -maxdepth 1 -type f -exec test -x {} \; -print 2>/dev/null | grep -v '\.sh$' | head -n1 || true)
+  # Fallback to self_doc.sh if nothing else found
   [[ -z "$CLI_BIN" && -f ./bin/self_doc.sh ]] && CLI_BIN="./bin/self_doc.sh"
+  if [[ -z "$CLI_BIN" || ! -f "$CLI_BIN" ]]; then
+    echo "❌ Could not find CLI binary. Use -f to override."
+    exit 1
+  fi
 fi
 
-# Final validation
-if [[ -z "$CLI_BIN" || ! -f "$CLI_BIN" ]]; then
-  echo "❌ Could not find CLI binary. Use -f to override."
-  exit 1
+CLI_NAME="$(basename "$CLI_BIN")"
+BREW_LINK="${BREW_LINK:-"https://github.com/raymonepping/homebrew-${CLI_NAME}"}"
+
+# Handle --version flag after CLI_NAME is defined
+if [[ "${PRINT_VERSION_ONLY:-false}" == true ]]; then
+  echo "${CLI_NAME} ${VERSION}"
+  exit 0
 fi
 
 [[ "$QUIET" == false ]] && echo "🧪 Using CLI binary: $CLI_BIN"
-# VERSION=$(grep -E '^VERSION=' "$CLI_BIN" | cut -d '=' -f2 | tr -d '"\r\n' | xargs)
-# VERSION=$(grep -E '^VERSION=' "$CLI_BIN" | cut -d '=' -f2 | tr -d '"\r\n')
-# VERSION=$(grep -E '^VERSION=' "$CLI_BIN" | cut -d '=' -f2 | tr -d '"')
+
+# VERSION detection logic
+# First, try to extract VERSION from CLI_BIN; if not found, fallback to script's VERSION
+EXTRACTED_VERSION=$(grep -E '^VERSION=' "$CLI_BIN" | head -n1 | cut -d '=' -f2 | tr -d '"\r\n' | xargs || true)
+if [[ -n "$EXTRACTED_VERSION" ]]; then
+  VERSION="$EXTRACTED_VERSION"
+fi
 
 [[ "$QUIET" == false ]] && echo "🧪 VERSION='$VERSION'"
-
-# --- Fallbacks if not set in vars ---
-CLI_NAME="${CLI_NAME:-$(basename "$CLI_BIN")}"
-
-print_version() {
-  echo "${CLI_NAME} ${VERSION}"
-}
-
-BREW_LINK="${BREW_LINK:-"https://github.com/raymonepping/homebrew-${CLI_NAME}"}"
 
 VARS_FILE="${TEMPLATE_DIR}/$(basename "$CLI_BIN" .sh).cli.vars"
 if [[ -f "$VARS_FILE" ]]; then
@@ -211,7 +218,6 @@ generate_readme_from_tpl() {
           gsub("{{BREW_LINK}}", brew_link)
 
           if ($0 ~ /{{FOLDER_TREE}}/) {
-            # Insert warning if not folder_tree
             if (tree_source == "tree") {
               print "> ⚠️  **folder_tree CLI not found.** This structure was generated using standard `tree` as fallback."
               print "> \n> To install folder_tree: `brew install raymonepping/folder-tree-cli/folder-tree-cli`"
