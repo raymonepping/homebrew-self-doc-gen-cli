@@ -1,15 +1,15 @@
-class FolderTreeCli < Formula
-  desc "CLI toolkit for visualizing folder structures with markdown reports"
-  homepage "https://github.com/raymonepping/folder_tree_cli"
-  url "https://github.com/raymonepping/homebrew-folder-tree-cli/archive/refs/tags/v1.0.5.tar.gz"
-  sha256 "9a2760649996ad8df0db2e3fb7d33d0d3ad2e518859473d4a7ea853bea4b65e5"
+class SelfDocGenCli < Formula
+  desc "Self-documenting CLI generator with markdown templates and folder visualization"
+  homepage "https://github.com/raymonepping/self_doc_gen_cli"
+  url "https://github.com/raymonepping/self_doc_gen_cli/archive/refs/tags/v1.0.0.tar.gz"
+  sha256 "0019dfc4b32d63c1392aa264aed2253c1e0c2fb09216f8e2cc269bbfb8bb49b5"
   license "MIT"
-  version "1.0.5"
+  version "1.0.0"
 
   depends_on "bash"
 
   def install
-    bin.install "bin/folder_tree" => "folder_tree"
+    bin.install "bin/self_doc.sh" => "self_doc"
     pkgshare.install "lib", "tpl"
     doc.install "README.md"
   end
@@ -17,19 +17,17 @@ class FolderTreeCli < Formula
   def caveats
     <<~EOS
       To get started, run:
-        folder_tree --help
+        self_doc --help
 
-      If you want to customize or extend templates/configs,
-      set this variable in your shell:
-        export FOLDER_TREE_HOME=#{opt_pkgshare}
+      To override templates/config:
+        export SELF_DOC_HOME=#{opt_pkgshare}
 
-      All shared scripts and templates are available in:
-        #{opt_pkgshare}/lib
+      Template location:
         #{opt_pkgshare}/tpl
     EOS
   end
 
   test do
-    assert_match "folder_tree", shell_output("#{bin}/folder_tree --version")
+    assert_match "Usage", shell_output("#{bin}/self_doc --help")
   end
 end
