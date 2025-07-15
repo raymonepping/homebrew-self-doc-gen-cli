@@ -6,19 +6,66 @@ trap '[[ "$QUIET" == false ]] && echo "❌ Error occurred on line $LINENO"; exit
 # --- Default values ---
 VERSION="1.0.5"
 
+# --- Homebrew / Dev / Local support ---
+if [[ -n "${SELF_DOC_HOME:-}" && -d "$SELF_DOC_HOME/lib" ]]; then
+  BASE_DIR="$SELF_DOC_HOME"
+elif command -v brew &>/dev/null; then
+  HOMEBREW_PREFIX="$(brew --prefix 2>/dev/null || true)"
+  if [[ -d "$HOMEBREW_PREFIX/share/self-doc-gen-cli/lib" ]]; then
+    BASE_DIR="$HOMEBREW_PREFIX/share/self-doc-gen-cli"
+  elif [[ -d "$HOMEBREW_PREFIX/opt/self-doc-gen-cli/share/self-doc-gen-cli/lib" ]]; then
+    BASE_DIR="$HOMEBREW_PREFIX/opt/self-doc-gen-cli/share/self-doc-gen-cli"
+  fi
+fi
+
+# --- Fallback to relative path if no brew env found ---
+if [[ -z "${BASE_DIR:-}" ]]; then
+  BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+fi
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+export LIB_DIR="$BASE_DIR/lib" # if used by sourced logic later
+
+# Locate tpl folder just like lib
+possible_tpl_dirs=(
+  "$BASE_DIR/tpl"
+  "$SCRIPT_DIR/../tpl"
+  "$SCRIPT_DIR/tpl"
+  "/opt/homebrew/share/self-doc-gen-cli/tpl"
+  "/opt/homebrew/opt/self-doc-gen-cli/share/self-doc-gen-cli/tpl"
+)
+
+for tdir in "${possible_tpl_dirs[@]}"; do
+  if [[ -d "$tdir" ]]; then
+    TPL_DIR="$tdir"
+    break
+  fi
+done
+
 IFS=$'\n\t'
 
 # --- Default values ---
-TEMPLATE_DIR="tpl"
+TEMPLATE_DIR="${TPL_DIR:-tpl}"
 OUT_FILE="README.md"
 DRY_RUN=false
 QUIET=false
 TREE_SOURCE=""
 
 # --- Dynamic discovery (unless overridden) ---
-CLI_BIN="${CLI_BIN:-$(find ./bin -maxdepth 1 -type f -perm +111 | grep -v '\.sh$' | head -n1)}"
+CLI_BIN="${CLI_BIN:-}"
 
-if [[ -z "${CLI_BIN:-}" || ! -f "$CLI_BIN" ]]; then
+# Try finding a binary in ./bin that isn't a .sh file
+if [[ -z "$CLI_BIN" ]]; then
+  CLI_BIN=$(find ./bin -maxdepth 1 -type f -exec test -x {} \; -print | grep -v '\.sh$' | head -n1 || true)
+fi
+
+# Fallback to self_doc.sh if nothing found
+if [[ -z "$CLI_BIN" && -f ./bin/self_doc.sh ]]; then
+  CLI_BIN="./bin/self_doc.sh"
+fi
+
+# Final validation
+if [[ -z "$CLI_BIN" || ! -f "$CLI_BIN" ]]; then
   echo "❌ Could not find CLI binary in ./bin."
   exit 1
 fi
@@ -97,7 +144,6 @@ if [[ -f "$VARS_FILE" ]]; then
 fi
 
 mapfile -t TEMPLATE_FILES < <(find "$TEMPLATE_DIR" -maxdepth 1 -type f -name 'readme_*.tpl' | sort)
-# TEMPLATE_FILES=($(ls "$TEMPLATE_DIR"/readme_*.tpl | sort))
 
 # Template existence check
 MISSING_TPL=()
@@ -108,20 +154,7 @@ if ((${#MISSING_TPL[@]})); then
   exit 1
 fi
 
-# TEMPLATE_FILES=($(ls "$TEMPLATE_DIR"/readme_*.tpl 2>/dev/null | sort))
-
-#TEMPLATE_FILES=(
-#  "$TEMPLATE_DIR/readme_header.tpl"
-#  "$TEMPLATE_DIR/readme_project.tpl"
-#  "$TEMPLATE_DIR/readme_structure.tpl"
-#  "$TEMPLATE_DIR/readme_body.tpl"
-#  "$TEMPLATE_DIR/readme_quote.tpl"
-#  "$TEMPLATE_DIR/readme_article.tpl"
-#  "$TEMPLATE_DIR/readme_footer.tpl"
-#)
-
 generate_folder_tree_block() {
-
   local raw_tree cleaned_tree
   if command -v folder_tree &>/dev/null; then
     raw_tree=$(folder_tree --hidden)
@@ -133,7 +166,6 @@ generate_folder_tree_block() {
     raw_tree="(Neither folder_tree nor tree is available in PATH.)\n./\n└── (tree unavailable)"
     TREE_SOURCE="none"
   fi
-
   cleaned_tree=$(
     echo "$raw_tree" |
       sed -E 's/\x1B\[[0-9;]*[mK]//g' |
