@@ -3,7 +3,7 @@
 > "Structure isn't boring – it's your first line of clarity." — *You (probably during a cleanup)*
 
 [![brew install](https://img.shields.io/badge/brew--install-success-green?logo=homebrew)](https://github.com/raymonepping/homebrew-self_doc)
-[![version](https://img.shields.io/badge/version-1.0.4-blue)](https://github.com/raymonepping/homebrew-self_doc)
+[![version](https://img.shields.io/badge/version-1.0.5-blue)](https://github.com/raymonepping/homebrew-self_doc)
 
 ---
 
@@ -58,9 +58,10 @@ export FOLDER_TREE_HOME=/opt/homebrew/opt/..
 ├── v1.0.2.tar.gz
 ├── v1.0.3.tar.gz
 ├── v1.0.4.tar.gz
-└── v1.0.5.tar.gz
+├── v1.0.5.tar.gz
+└── v1.0.6.tar.gz
 
-5 directories, 20 files
+5 directories, 21 files
 ```
 
 ---
