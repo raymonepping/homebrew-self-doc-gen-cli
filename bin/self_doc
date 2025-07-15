@@ -4,7 +4,8 @@ set -euo pipefail
 trap '[[ "$QUIET" == false ]] && echo "❌ Error occurred on line $LINENO"; exit 1' ERR
 
 # --- Default values ---
-VERSION="1.0.0"
+# shellcheck disable=SC2034
+VERSION="1.0.4"
 
 # --- Homebrew / Dev / Local support ---
 if [[ -n "${SELF_DOC_HOME:-}" && -d "$SELF_DOC_HOME/lib" ]]; then
@@ -70,7 +71,8 @@ if [[ -z "$CLI_BIN" || ! -f "$CLI_BIN" ]]; then
   exit 1
 fi
 
-VERSION=$(grep -E '^VERSION=' "$CLI_BIN" | cut -d '=' -f2 | tr -d '"\r\n')
+VERSION=$(grep -E '^VERSION=' "$CLI_BIN" | cut -d '=' -f2 | tr -d '"\r\n' | xargs)
+# VERSION=$(grep -E '^VERSION=' "$CLI_BIN" | cut -d '=' -f2 | tr -d '"\r\n')
 # VERSION=$(grep -E '^VERSION=' "$CLI_BIN" | cut -d '=' -f2 | tr -d '"')
 
 [[ "$QUIET" == false ]] && echo "🧪 Version parsed: '$VERSION'"
