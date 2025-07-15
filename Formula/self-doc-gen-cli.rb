@@ -10,7 +10,7 @@ class SelfDocGenCli < Formula
 
   def install
     bin.install "bin/self_doc" => "self_doc"
-    pkgshare.install "lib", "tpl"
+    pkgshare.install "tpl" 
     doc.install "README.md"
   end
 
