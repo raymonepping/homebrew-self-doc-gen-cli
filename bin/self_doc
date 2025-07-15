@@ -5,7 +5,7 @@ trap '[[ "${QUIET:-false}" == false ]] && echo "❌ Error occurred on line $LINE
 
 # --- Default values ---
 # shellcheck disable=SC2034
-VERSION="1.0.8"
+VERSION="1.0.9"
 
 # --- Homebrew / Dev / Local support ---
 if [[ -n "${SELF_DOC_HOME:-}" && -d "$SELF_DOC_HOME/lib" ]]; then
@@ -113,6 +113,11 @@ while [[ $# -gt 0 ]]; do
     ;;
   esac
 done
+
+if [[ ! -d "$TEMPLATE_DIR" ]]; then
+  echo "❌ Template directory '$TEMPLATE_DIR' does not exist."
+  exit 1
+fi
 
 # --- CLI binary resolution ---
 if [[ -n "$CLI_BIN" ]]; then
