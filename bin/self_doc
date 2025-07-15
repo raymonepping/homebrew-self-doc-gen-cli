@@ -53,24 +53,18 @@ QUIET=false
 TREE_SOURCE=""
 
 # --- Dynamic discovery (unless overridden) ---
-CLI_BIN="${CLI_BIN:-}"
-
-# Try finding a binary in ./bin that isn't a .sh file
-if [[ -z "$CLI_BIN" ]]; then
-  CLI_BIN=$(find ./bin -maxdepth 1 -type f -exec test -x {} \; -print | grep -v '\.sh$' | head -n1 || true)
-fi
-
-# Fallback to self_doc.sh if nothing found
-if [[ -z "$CLI_BIN" && -f ./bin/self_doc.sh ]]; then
-  CLI_BIN="./bin/self_doc.sh"
+if [[ -z "${CLI_BIN:-}" ]]; then
+  CLI_BIN=$(find ./bin -maxdepth 1 -type f -exec test -x {} \; -print 2>/dev/null | grep -v '\.sh$' | head -n1 || true)
+  [[ -z "$CLI_BIN" && -f ./bin/self_doc.sh ]] && CLI_BIN="./bin/self_doc.sh"
 fi
 
 # Final validation
 if [[ -z "$CLI_BIN" || ! -f "$CLI_BIN" ]]; then
-  echo "❌ Could not find CLI binary in ./bin."
+  echo "❌ Could not find CLI binary. Use -f to override."
   exit 1
 fi
 
+[[ "$QUIET" == false ]] && echo "🧪 Using CLI binary: $CLI_BIN"
 # VERSION=$(grep -E '^VERSION=' "$CLI_BIN" | cut -d '=' -f2 | tr -d '"\r\n' | xargs)
 # VERSION=$(grep -E '^VERSION=' "$CLI_BIN" | cut -d '=' -f2 | tr -d '"\r\n')
 # VERSION=$(grep -E '^VERSION=' "$CLI_BIN" | cut -d '=' -f2 | tr -d '"')
@@ -93,6 +87,7 @@ Usage: $0 [options]
 
 Options:
   -t DIR      Template directory (default: tpl)
+  -f FILE     Path to CLI binary (default: auto-detected from ./bin)
   -o FILE     Output README file (default: README.md)
   -n          Dry run (don't write output)
   -q          Quiet mode (suppress logs)
@@ -130,6 +125,10 @@ while [[ $# -gt 0 ]]; do
     print_version
     exit 0
     ;;
+  -f | --cli-bin)
+    CLI_BIN="$2"
+    shift 2
+    ;;    
   -h | --help)
     show_help
     exit 0
