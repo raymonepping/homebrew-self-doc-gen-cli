@@ -1,10 +1,10 @@
 class SelfDocGenCli < Formula
   desc "Self-documenting CLI generator with markdown templates and folder visualization"
   homepage "https://github.com/raymonepping/self_doc_gen_cli"
-  url "https://github.com/raymonepping/homebrew-self-doc-gen-cli/archive/refs/tags/v1.0.9.tar.gz"
-  sha256 "347ade151cef530cc7bee21f553205735c9024674be8e28843b0c8dcb80654e1"
+  url "https://github.com/raymonepping/homebrew-self-doc-gen-cli/archive/refs/tags/v1.0.10.tar.gz"
+  sha256 "6a7892be0ebab53403c7178f21f84cd29fb301e67ab1890b1133283e1205df7c"
   license "MIT"
-  version "1.0.9"
+  version "1.0.10"
 
   depends_on "bash"
 
