@@ -71,7 +71,7 @@ Options:
   -v          Print version and exit
   -h          Show help and exit
 
-Long flags supported as well: --tpl-dir, --outfile, --dry-run, --quiet, --version, --cli-bin, --help
+Long flags supported as well: --tpl-dir, --outfile, --outdir, --dry-run, --quiet, --version, --cli-bin, --help
 EOF
 }
 
