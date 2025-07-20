@@ -5,7 +5,7 @@ trap '[[ "${QUIET:-false}" == false ]] && echo "❌ Error occurred on line $LINE
 
 # --- Default values ---
 # shellcheck disable=SC2034
-VERSION="1.0.14"
+VERSION="1.2.0"
 
 # --- Homebrew / Dev / Local support ---
 if [[ -n "${SELF_DOC_HOME:-}" && -d "$SELF_DOC_HOME/lib" ]]; then
